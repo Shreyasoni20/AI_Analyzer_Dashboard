@@ -10,7 +10,7 @@ const [data,setData] = useState<any>(null)
 
 useEffect(()=>{
 
-axios.get("http://localhost:8000/sales-kpis")
+axios.get("https://ai-analyzer-dashboard.onrender.com/")
 .then(res=>setData(res.data))
 
 },[])
@@ -135,3 +135,4 @@ return(
 )
 
 }
+
