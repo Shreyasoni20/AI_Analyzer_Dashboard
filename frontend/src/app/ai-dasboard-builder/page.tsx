@@ -38,7 +38,7 @@ setMessages((prev)=>[...prev,userMsg])
 try{
 
 const res = await axios.post(
-"http://localhost:8000/generate",
+"https://ai-analyzer-dashboard.onrender.com/",
 {prompt:input}
 )
 
