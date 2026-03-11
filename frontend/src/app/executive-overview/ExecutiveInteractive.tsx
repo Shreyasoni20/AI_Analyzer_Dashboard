@@ -19,7 +19,7 @@ const [kpis,setKpis] = useState<any>(null)
 
 useEffect(()=>{
 
-axios.get("http://localhost:8000/kpis")
+axios.get("https://ai-analyzer-dashboard.onrender.com/")
 .then(res=>setKpis(res.data))
 
 },[])
@@ -183,3 +183,4 @@ return(
 )
 
 }
+
