@@ -1,25 +1,25 @@
 "use client"
 
 import Header from "@/components/common/Header"
-
-const pipeline = [
-{stage:"Prospecting", deals:312, amount:"$11.8M"},
-{stage:"Qualification", deals:218, amount:"$8.4M"},
-{stage:"Proposal", deals:142, amount:"$6.1M"},
-{stage:"Negotiation", deals:89, amount:"$4.2M"},
-{stage:"Closed Won", deals:54, amount:"$2.8M"},
-{stage:"Closed Lost", deals:35, amount:"$1.4M"}
-]
-
-const performers = [
-{name:"Sarah Mitchell", revenue:"$892K"},
-{name:"James Rodriguez", revenue:"$764K"},
-{name:"Priya Sharma", revenue:"$698K"},
-{name:"David Chen", revenue:"$612K"},
-{name:"Emma Thompson", revenue:"$578K"}
-]
+import { useEffect, useState } from "react"
+import axios from "axios"
 
 export default function Page(){
+
+const [data,setData] = useState<any>(null)
+
+useEffect(()=>{
+
+axios.get("http://localhost:8000/sales-kpis")
+.then(res=>setData(res.data))
+
+},[])
+
+if(!data) return null
+
+const formatINR = (value:number)=>{
+return "₹" + value.toLocaleString("en-IN")
+}
 
 return(
 
@@ -33,46 +33,71 @@ return(
 Sales Analytics Hub
 </h1>
 
-{/* KPI STRIP */}
+{/* KPI Cards */}
 
 <div className="grid grid-cols-6 gap-4">
 
-<KPI title="Total Revenue" value="$4.82M"/>
-<KPI title="Conversion Rate" value="24.7%"/>
-<KPI title="Avg Deal Size" value="$38,400"/>
-<KPI title="Pipeline Velocity" value="$312K/day"/>
-<KPI title="Win Rate" value="31.2%"/>
-<KPI title="Open Deals" value="247"/>
+<KPI
+title="Total Revenue"
+value={formatINR(data.total_revenue)}
+/>
+
+<KPI
+title="Conversion Rate"
+value={`${data.conversion_rate}%`}
+/>
+
+<KPI
+title="Avg Deal Size"
+value={formatINR(data.avg_deal_size)}
+/>
+
+<KPI
+title="Pipeline Velocity"
+value={formatINR(data.pipeline_velocity)}
+/>
+
+<KPI
+title="Win Rate"
+value={`${data.win_rate}%`}
+/>
+
+<KPI
+title="Open Deals"
+value={data.open_deals}
+/>
 
 </div>
 
-{/* PIPELINE */}
+{/* Pipeline */}
 
 <div className="bg-card border border-border rounded-xl p-6">
 
-<h2 className="font-semibold mb-4">
+<h2 className="text-lg font-semibold mb-4">
 Sales Pipeline
 </h2>
 
-<div className="space-y-4">
+{[
+{stage:"Prospecting",value:80},
+{stage:"Qualification",value:65},
+{stage:"Proposal",value:40},
+{stage:"Negotiation",value:25},
+{stage:"Closed Won",value:12},
+{stage:"Closed Lost",value:8}
+].map((s,i)=>(
 
-{pipeline.map((p,i)=>(
+<div key={i} className="mb-4">
 
-<div key={i}>
-
-<div className="flex justify-between text-sm mb-1">
-
-<span>{p.stage}</span>
-
-<span>{p.amount}</span>
-
+<div className="flex justify-between mb-1">
+<span>{s.stage}</span>
+<span>{s.value}%</span>
 </div>
 
-<div className="h-3 bg-muted rounded-full">
+<div className="w-full bg-gray-200 rounded h-3">
 
 <div
-className="h-3 bg-blue-600 rounded-full"
-style={{width:`${(p.deals/312)*100}%`}}
+className="bg-blue-600 h-3 rounded"
+style={{width:`${s.value}%`}}
 />
 
 </div>
@@ -80,39 +105,6 @@ style={{width:`${(p.deals/312)*100}%`}}
 </div>
 
 ))}
-
-</div>
-
-</div>
-
-{/* TOP PERFORMERS */}
-
-<div className="bg-card border border-border rounded-xl p-6">
-
-<h2 className="font-semibold mb-4">
-Top Performers
-</h2>
-
-<div className="space-y-3">
-
-{performers.map((p,i)=>(
-
-<div
-key={i}
-className="flex justify-between border-b pb-2"
->
-
-<span>{p.name}</span>
-
-<span className="font-semibold">
-{p.revenue}
-</span>
-
-</div>
-
-))}
-
-</div>
 
 </div>
 
@@ -134,7 +126,7 @@ return(
 {title}
 </div>
 
-<div className="text-lg font-bold">
+<div className="text-xl font-bold">
 {value}
 </div>
 
