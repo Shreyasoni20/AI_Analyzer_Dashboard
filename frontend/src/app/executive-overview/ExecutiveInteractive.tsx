@@ -1,6 +1,9 @@
 "use client"
 
 import Header from "@/components/common/Header"
+import { useEffect, useState } from "react"
+import axios from "axios"
+
 import {
 ResponsiveContainer,
 LineChart,
@@ -9,6 +12,17 @@ XAxis,
 YAxis,
 Tooltip
 } from "recharts"
+
+export default function Page(){
+
+const [kpis,setKpis] = useState<any>(null)
+
+useEffect(()=>{
+
+axios.get("http://localhost:8000/kpis")
+.then(res=>setKpis(res.data))
+
+},[])
 
 const revenueData = [
 {month:"Jan",revenue:32000},
@@ -20,15 +34,13 @@ const revenueData = [
 ]
 
 const departments = [
-{ name:"Sales", score:94, status:"good" },
-{ name:"Marketing", score:88, status:"good" },
-{ name:"Operations", score:76, status:"warn" },
-{ name:"Finance", score:91, status:"good" },
-{ name:"Human Resources", score:79, status:"warn" },
-{ name:"Product", score:68, status:"bad" }
+{ name:"Sales", score:94 },
+{ name:"Marketing", score:88 },
+{ name:"Operations", score:76 },
+{ name:"Finance", score:91 },
+{ name:"Human Resources", score:79 },
+{ name:"Product", score:68 }
 ]
-
-export default function Page(){
 
 return(
 
@@ -44,14 +56,37 @@ Executive Overview
 
 {/* KPI CARDS */}
 
+{kpis && (
+
 <div className="grid grid-cols-4 gap-4">
 
-<KPI title="Total Revenue" value="$48.7M" change="+12.4%" />
-<KPI title="Growth Rate" value="12.4%" change="+2.1%" />
-<KPI title="Customer Acquisition" value="3,842" change="-1.2%" />
-<KPI title="Operational Efficiency" value="87.3%" change="+1.8%" />
+<KPI
+title="Total Revenue"
+value={`₹${kpis.revenue.toLocaleString()}`}
+change="+12%"
+/>
+
+<KPI
+title="Avg Online Orders"
+value={kpis.orders}
+change="+3%"
+/>
+
+<KPI
+title="Return Frequency"
+value={kpis.returns}
+change="-1%"
+/>
+
+<KPI
+title="Operational Efficiency"
+value={`${kpis.efficiency}%`}
+change="+2%"
+/>
 
 </div>
+
+)}
 
 {/* REVENUE TREND */}
 
@@ -95,6 +130,7 @@ Department Performance Scorecards
 <div className="grid grid-cols-3 gap-4">
 
 {departments.map((d,i)=>(
+
 <div
 key={i}
 className="border rounded-lg p-4 bg-muted"
@@ -109,6 +145,7 @@ className="border rounded-lg p-4 bg-muted"
 </div>
 
 </div>
+
 ))}
 
 </div>
