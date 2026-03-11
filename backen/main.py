@@ -6,7 +6,10 @@ import pandas as pd
 
 app = FastAPI()
 
-# Enable CORS for frontend
+# -----------------------------
+# Enable CORS
+# -----------------------------
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,13 +18,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load dataset
-df = pd.read_csv("Customer_Behaviour.csv")
+# -----------------------------
+# Load Dataset
+# -----------------------------
 
+df = pd.read_csv("Customer_Behaviour.csv")
 
 class Prompt(BaseModel):
     prompt: str
 
+
+# =============================
+# AI DASHBOARD GENERATION
+# =============================
 
 @app.post("/generate")
 def generate_dashboard(data: Prompt):
@@ -36,13 +45,8 @@ def generate_dashboard(data: Prompt):
     charts = []
     insight = ""
 
-    # ------------------------------------------------
-    # INTERNET USAGE vs SPENDING  → LINE CHART
-    # ------------------------------------------------
-    if any(word in prompt for word in [
-        "internet", "online", "इंटरनेट", "internetnutzung",
-        "usage", "net", "web"
-    ]):
+    # Internet Usage Chart
+    if "internet" in prompt:
 
         internet_data = df.groupby("daily_internet_hours")[
             "avg_online_spend"
@@ -61,15 +65,11 @@ def generate_dashboard(data: Prompt):
             ]
         })
 
-        insight = "Higher internet usage often leads to higher online spending."
+        insight = "Higher internet usage often leads to more online spending."
 
 
-    # ------------------------------------------------
-    # CITY TIER ANALYSIS → BAR CHART
-    # ------------------------------------------------
-    elif any(word in prompt for word in [
-        "city", "tier", "शहर", "ciudad", "stadt"
-    ]):
+    # City Tier Spending
+    elif "city" in prompt:
 
         city_data = df.groupby("city_tier")[
             "avg_online_spend"
@@ -88,16 +88,11 @@ def generate_dashboard(data: Prompt):
             ]
         })
 
-        insight = "Customers from different city tiers spend differently."
+        insight = "Customers from higher city tiers spend more."
 
 
-    # ------------------------------------------------
-    # SHOPPING PREFERENCE → PIE CHART
-    # ------------------------------------------------
-    elif any(word in prompt for word in [
-        "preference", "shopping", "खरीदारी",
-        "achat", "einkauf"
-    ]):
+    # Shopping Preference Pie Chart
+    elif "shopping" in prompt or "preference" in prompt:
 
         pref_data = df["shopping_preference"].value_counts().reset_index()
         pref_data.columns = ["shopping_preference", "count"]
@@ -115,43 +110,14 @@ def generate_dashboard(data: Prompt):
             ]
         })
 
-        insight = "This pie chart shows customer shopping preference."
+        insight = "This pie chart shows customer shopping preferences."
 
 
-    # ------------------------------------------------
-    # GENDER SPENDING → BAR CHART
-    # ------------------------------------------------
-    elif any(word in prompt for word in [
-        "gender", "male", "female"
-    ]):
-
-        gender_data = df.groupby("gender")[
-            "avg_online_spend"
-        ].mean().reset_index()
-
-        charts.append({
-            "id": "4",
-            "title": "Average Spending by Gender",
-            "type": "bar",
-            "data": [
-                {
-                    "name": row["gender"],
-                    "value": float(row["avg_online_spend"])
-                }
-                for _, row in gender_data.iterrows()
-            ]
-        })
-
-        insight = "Average online spending comparison between genders."
-
-
-    # ------------------------------------------------
-    # DEFAULT CHART → BAR
-    # ------------------------------------------------
+    # Default Chart
     else:
 
         charts.append({
-            "id": "5",
+            "id": "4",
             "title": "Online vs Store Spending",
             "type": "bar",
             "data": [
@@ -160,10 +126,68 @@ def generate_dashboard(data: Prompt):
             ]
         })
 
-        insight = "Default comparison of online vs store spending."
+        insight = "Comparison of online vs store spending."
 
     return {
         "language": language,
         "insight": insight,
         "charts": charts
+    }
+
+
+# =============================
+# EXECUTIVE DASHBOARD KPIs
+# =============================
+
+@app.get("/kpis")
+def get_kpis():
+
+    total_online = df["avg_online_spend"].sum()
+    total_store = df["avg_store_spend"].sum()
+
+    total_revenue = total_online + total_store
+
+    avg_orders = df["monthly_online_orders"].mean()
+
+    return_freq = df["return_frequency"].mean()
+
+    efficiency = 100 - (return_freq * 10)
+
+    return {
+        "revenue": round(total_revenue, 2),
+        "orders": round(avg_orders, 2),
+        "returns": round(return_freq, 2),
+        "efficiency": round(efficiency, 2)
+    }
+
+
+# =============================
+# SALES DASHBOARD KPIs
+# =============================
+
+@app.get("/sales-kpis")
+def sales_kpis():
+
+    total_revenue = df["avg_online_spend"].sum() + df["avg_store_spend"].sum()
+
+    avg_deal_size = df["avg_online_spend"].mean()
+
+    conversion_rate = (
+        df["monthly_online_orders"].sum() /
+        (df["monthly_online_orders"].sum() + df["monthly_store_visits"].sum())
+    ) * 100
+
+    pipeline_velocity = avg_deal_size * 8
+
+    win_rate = 100 - (df["return_frequency"].mean() * 10)
+
+    open_deals = int(df["monthly_online_orders"].sum())
+
+    return {
+        "total_revenue": round(total_revenue, 2),
+        "avg_deal_size": round(avg_deal_size, 2),
+        "conversion_rate": round(conversion_rate, 2),
+        "pipeline_velocity": round(pipeline_velocity, 2),
+        "win_rate": round(win_rate, 2),
+        "open_deals": open_deals
     }
